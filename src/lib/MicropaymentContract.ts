@@ -6,8 +6,11 @@
 
 import { Context } from 'fabric-contract-api';
 import { BlockotusContract } from 'hyperledger-fabric-chaincode-helper';
+import { HashRedeem } from './models/Commitment';
 import { SignedDownloadIntention } from './models/DownloadIntention';
+import { SignatureValidator } from './tools/SignatureValidator';
 import { State } from './tools/State';
+import sha256 from 'crypto-js/sha256';
 
 
 export class MicroPaymentContract extends BlockotusContract {
@@ -24,6 +27,10 @@ export class MicroPaymentContract extends BlockotusContract {
         
         // create update state to blockchain;
         const parsedSignedDownloadIntention: SignedDownloadIntention = JSON.parse(signedDownloadIntention);
+
+        if(!SignatureValidator.verifyDownloadIntention(parsedSignedDownloadIntention)){
+            return ("Invalid signature.");
+        }
 
         const torrentId = parsedSignedDownloadIntention.downloadIntention.torrentId;
         const payer = parsedSignedDownloadIntention.downloadIntention.payerPublicKey;
@@ -50,7 +57,22 @@ export class MicroPaymentContract extends BlockotusContract {
         return await State.getState(ctx, "currentDownloadIntentions");
     }
 
-    public redeemPayment(ctx: Context){
+    public redeemPayment(ctx: Context, redeemRequest: string){
+        const redeemRequestObject: HashRedeem = JSON.parse(redeemRequest);
+        // assert signature validity;
+        if (!SignatureValidator.verifyPaymentRedeem(redeemRequestObject)){
+            return ("invalid commit")
+        }
 
+        // assert hash validity
+        var currentHash = redeemRequestObject.hash;
+        for (let index = 0; index < redeemRequestObject.index; index++) {
+            currentHash = sha256(currentHash).toString();
+        }
+        if (currentHash !== redeemRequestObject.commitment.content.hashRoot){
+            return ("invalid payment hash");
+        }
+
+        // move funds
     }
 }

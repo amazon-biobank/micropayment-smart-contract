@@ -23,7 +23,8 @@
         "fabric-contract-api": "^2.0.0",
         "fabric-shim": "^2.0.0",
         "elliptic": "^6.5.4",
-        "hyperledger-fabric-chaincode-helper": "^0.0.14"
+        "hyperledger-fabric-chaincode-helper": "^0.0.14",
+        "crypto-js": "^4.0.0"
     },
     "devDependencies": {
         "@types/chai": "^4.1.7",
